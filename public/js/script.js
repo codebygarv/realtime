@@ -1,42 +1,47 @@
-const socket = io(); // backend par requet bheji or io.on() ne print kardiya connected . bcz it makes request 
+const socket = io();
 
-
-// watchpostion se uske postion le like co ordinates x , y means mera divice kaha par khda hai usse backend me bhej diya , koi error aya toh use recieve krke print kardiya and last some settings like mujhe high accuracy chahiye , or timout hoga means  haar baar user ki details ko 5000 ms ke baad user ki co ordinates update kro means watch position duabra check krega hamri postions ko 
-
+// Obtain and send geolocation
 if (navigator.geolocation) {
     navigator.geolocation.watchPosition((position) => {
         const { latitude, longitude } = position.coords;
         socket.emit("send-location", { latitude, longitude });
     }, (error) => {
-        console.log(error);
+        console.error("Error obtaining location:", error);
+        alert("Unable to retrieve your location. Please check your browser settings.");
     }, {
         enableHighAccuracy: true,
         timeout: 5000,
         maximumAge: 0
-    }
-    );
+    });
+} else {
+    alert("Geolocation is not supported by your browser.");
 }
+
+// Initialize map
 const map = L.map("map").setView([0, 0], 16);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "OpenStreetmap"
+    attribution: "© OpenStreetMap contributors"
 }).addTo(map);
 
 const markers = {};
 
-socket.on("recieve-location", (data) => {
+// Receive location updates
+socket.on("receive-location", (data) => {
+    console.log("Location update received:", data);
     const { id, latitude, longitude } = data;
     map.setView([latitude, longitude]);
-    if(markers[id]){
-        markers[id].setLatLng([latitude,longitude]);
-    }else{
-        markers[id] = L.marker([latitude,longitude]).addTo(map);
+    if (markers[id]) {
+        markers[id].setLatLng([latitude, longitude]);
+    } else {
+        markers[id] = L.marker([latitude, longitude]).addTo(map);
     }
 });
 
-socket.on("user-disconnected",(id)=>{
-    if(markers[id]){
+// Handle user disconnection
+socket.on("user-disconnected", (id) => {
+    if (markers[id]) {
         map.removeLayer(markers[id]);
         delete markers[id];
     }
-})
+});

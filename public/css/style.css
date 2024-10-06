@@ -4,13 +4,16 @@
     box-sizing: border-box;
 }
 
-html,
-body {
-    height: 100%;
+/* Ensure the map occupies the full viewport */
+#map {
+    height: 100vh;
     width: 100%;
 }
 
-#map{
-    width: 1000%;
+body,
+html {
+    margin: 0;
+    padding: 0;
     height: 100%;
+    width: 100%;
 }
